@@ -46,26 +46,42 @@ export default function ChatBot() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/ai', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: inputValue,
-          context: 'GST and finance assistance',
-        }),
-      });
+      const API_KEY = 'AIzaSyChWADhYiQmqv1GHQ9aLYvLm81BvOGs7SU';
+      const MODEL = 'gemini-pro';
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  {
+                    text: `You are a GST (Goods and Services Tax) and finance expert assistant. Answer the following question concisely and accurately. If the question is not related to GST, taxes, or finance, politely redirect the conversation.\n\nQuestion: ${inputValue}`,
+                  },
+                ],
+              },
+            ],
+          }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error('API request failed');
       }
 
       const data = await response.json();
+      const botText =
+        data.candidates?.[0]?.content?.parts?.[0]?.text ||
+        'Sorry, I could not process your request.';
 
       const botMessage: Message = {
         id: messages.length + 2,
-        text: data.response || 'Sorry, I could not process your request.',
+        text: botText,
         sender: 'bot',
         timestamp: new Date(),
       };
@@ -74,7 +90,7 @@ export default function ChatBot() {
     } catch (error) {
       const errorMessage: Message = {
         id: messages.length + 2,
-        text: 'API connection not configured yet. Please configure your AI API endpoint in the code.',
+        text: 'Failed to connect to AI service. Please check your internet connection and try again.',
         sender: 'bot',
         timestamp: new Date(),
       };
